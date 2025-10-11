@@ -5,13 +5,6 @@
 > [!IMPORTANT]
 > Если ваш провайдер перехватывает DNS-запросы - требуются меры по их защите, иначе ByeDPI не будет работать.
 > Podkop несовместим с пакетом `https-dns-proxy` и схема FakeIP может затруднить поиск подходящего решения для противодействия перехвату DNS.
-
----
-## Установка, обновление, удаление ByeDPI и Podkop, с возможностью интеграции ByeDPI в Podkop и сменой стратегии.
-```
-sh <(wget -O - https://raw.githubusercontent.com/StressOzz/OpenWRT-Scrypt/main/Podkop+ByeDPI-Manager.sh)
-```
-
 ---
 
 ## 0. Установка Podkop
