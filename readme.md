@@ -7,7 +7,7 @@
 > Podkop несовместим с пакетом `https-dns-proxy` и схема FakeIP может затруднить поиск подходящего решения для противодействия перехвату DNS.
 
 ---
-## Установка, обновление, удаление ByeDPI и Podkop, с возможностью интеграции ByeDPI в Podkop
+## Установка, обновление, удаление ByeDPI и Podkop, с возможностью интеграции ByeDPI в Podkop и сменой стратегии.
 ```
 sh <(wget -O - https://raw.githubusercontent.com/StressOzz/OpenWRT-Scrypt/main/Podkop+ByeDPI-Manager.sh)
 ```
