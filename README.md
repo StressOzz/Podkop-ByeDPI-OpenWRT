@@ -1,4 +1,4 @@
-<h1 align="center">🧩 ByeDPI & Podkop Manager</h1>
+<h1 align="center">🧩 Podkop + ByeDPI &  Manager</h1>
 
 <p align="center">
   <b>Многофункциональный установщик, менеджер и интегратор для OpenWRT.</b><br>
