@@ -128,3 +128,13 @@ sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-ByeDPI-OpenWRT
 - Если GitHub выдаёт ошибку лимита запросов — подождите 30–60 минут.
 
 - При смене стратегии ByeDPI можно не перезапускать Podkop вручную — менеджер делает это сам.
+
+---
+## Большое спасибо
+
+- **[itdoginfo](https://github.com/itdoginfo)** за [podkop](https://github.com/itdoginfo/podkop)
+- **[hufrea](https://github.com/hufrea)** за [byedpi](https://github.com/hufrea/byedpi)
+- **[spvkgn](https://github.com/spvkgn)** за GitHub Actions
+- **[romanvht](https://github.com/romanvht)** за возможность тестировать стратегии
+- **[DPITrickster](https://github.com/DPITrickster)** за версию для OpenWRT и за написание гайда по ручной установке
+
