@@ -57,7 +57,7 @@ sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-ByeDPI-OpenWRT
 
 ### 2️⃣ Интеграция ByeDPI в Podkop
 
-**Пункта 3)**
+**Пункт 3)**
 
 - DNS локальный отключается (`uci set dhcp.@dnsmasq[0].localuse=0`)
 
