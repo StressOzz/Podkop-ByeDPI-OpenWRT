@@ -142,7 +142,7 @@ install_update() {
 	echo -e ""
 	/etc/init.d/byedpi enable >/dev/null 2>&1
     /etc/init.d/byedpi start >/dev/null 2>&1
-    echo -e "ByeDPI ${GREEN}успешно установлен!${NC}"
+    echo -e "ByeDPI ${GREEN}успешно установлен / обновлён!${NC}"
 	echo -e ""
     read -p "Нажмите Enter..." dummy
 }
