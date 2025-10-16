@@ -1,3 +1,4 @@
+
 #!/bin/sh
 # ==========================================
 # ByeDPI & Podkop Manager by StressOzz
@@ -22,7 +23,7 @@ WORKDIR="/tmp/byedpi"
 # ==========================================
 curl_install() {
     command -v curl >/dev/null 2>&1 || {
-		clear
+		clear 
 		echo -e ""
         echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
 		echo -e ""
@@ -51,9 +52,9 @@ get_versions() {
     if [ -n "$BYEDPI_URL" ]; then
         BYEDPI_FILE=$(basename "$BYEDPI_URL")
         BYEDPI_LATEST_VER=$(echo "$BYEDPI_FILE" | sed -E 's/^byedpi_([0-9]+\.[0-9]+\.[0-9]+)(-r[0-9]+)?_.*/\1/')
-        LATEST_VER="$BYEDPI_LATEST_VER"
-        LATEST_URL="$BYEDPI_URL"
-        LATEST_FILE="$BYEDPI_FILE"
+        LATEST_VER="$BYEDPI_LATEST_VER"      # добавляем для install_update
+        LATEST_URL="$BYEDPI_URL"            # добавляем для install_update
+        LATEST_FILE="$BYEDPI_FILE"          # добавляем для install_update
     else
         BYEDPI_LATEST_VER="не найдена"
         LATEST_VER=""
@@ -233,15 +234,15 @@ install_podkop() {
     MODEL=$(cat /tmp/sysinfo/model 2>/dev/null || echo "не определено")
     AVAILABLE_SPACE=$(df /overlay | awk 'NR==2 {print $4}')
     REQUIRED_SPACE=26000
-
-[ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ] && {
+	
+[ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ] && { 
     msg "Недостаточно свободного места"
     echo ""
     read -p "Нажмите Enter..." dummy
     return
 }
 
-nslookup google.com >/dev/null 2>&1 || {
+nslookup google.com >/dev/null 2>&1 || { 
     msg "DNS не работает"
     echo ""
     read -p "Нажмите Enter..." dummy
@@ -269,7 +270,7 @@ nslookup google.com >/dev/null 2>&1 || {
 
     /usr/sbin/ntpd -q -p 194.190.168.1 -p 216.239.35.0 -p 216.239.35.4 -p 162.159.200.1 -p 162.159.200.123 >/dev/null 2>&1
 
-pkg_list_update || {
+pkg_list_update || { 
     msg "Не удалось обновить список пакетов"
     echo ""
     read -p "Нажмите Enter..." dummy
@@ -308,7 +309,7 @@ pkg_list_update || {
         fi
     done
 
-[ $download_success -eq 0 ] && {
+[ $download_success -eq 0 ] && { 
     msg "Нет успешно скачанных пакетов"
     echo ""
     read -p "Нажмите Enter..." dummy
@@ -441,12 +442,12 @@ EOF
         sleep 1
         reboot
         ;;
-    *)
-        echo -e "${YELLOW}Перезагрузка отложена.${NC}"
-		echo -e ""
-		read -p "Нажмите Enter..." dummy
+    *) 
+        echo -e "${YELLOW}Перезагрузка отложена.${NC}" 
         ;;
 esac
+echo -e ""
+read -p "Нажмите Enter..." dummy
 }
 
 # ==========================================
@@ -490,7 +491,7 @@ uninstall_podkop() {
     clear
     echo -e ""
     echo -e "${MAGENTA}Удаление Podkop${NC}"
-
+    
     # Удаляем пакеты
     opkg remove luci-i18n-podkop-ru luci-app-podkop podkop --autoremove >/dev/null 2>&1 || true
 
@@ -522,7 +523,7 @@ full_install_integration() {
 show_menu() {
     get_versions
 
-# ==========================================
+# ==========================================	
 # Получаем текущую стратегию ByeDPI
 # ==========================================
 if [ -f /etc/config/byedpi ]; then
@@ -536,7 +537,7 @@ fi
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║     ${BLUE}Podkop+ByeDPI Manager${NC}     ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "                             ${DGRAY}v2.2${NC}"
+	echo -e "                             ${DGRAY}v2.1${NC}"
 
 	check_podkop_status
 	check_byedpi_status
@@ -573,7 +574,7 @@ fi
         5) install_podkop ;;
 		6) uninstall_podkop ;;
 		7) full_install_integration ;;
-		8)
+		8) 
 		echo -e ""
 		echo -e "${RED}Перезагрузка${NC}"
 		echo -e ""
