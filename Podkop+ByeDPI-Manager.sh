@@ -26,31 +26,31 @@ export PATH=$PATH:/usr/bin:/usr/sbin:/bin:/sbin
 # Проверка и установка curl
 # ==========================================
 curl_install() {
+    # Жёстко задаём путь к curl
+    CURL_BIN="/usr/bin/curl"
+
     # Проверяем наличие curl
-    CURL_BIN=$(command -v curl || echo "")
-    if [ -n "$CURL_BIN" ]; then
+    if [ -x "$CURL_BIN" ]; then
         return 0
     fi
 
-    # Пытаемся установить
-    	clear 
-		echo -e ""
-        echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
-		echo -e ""
+    # Если нет — ставим
+    clear
+    echo -e ""
+    echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl${NC} для загрузки информации с ${WHITE}GitHub${NC}"
+    echo -e ""
     opkg update >/dev/null 2>&1
     opkg install curl -y >/dev/null 2>&1
 
     # Проверяем после установки
-    CURL_BIN=$(command -v curl || echo "")
-    if [ -z "$CURL_BIN" ]; then
-		echo -e ""
+    if [ ! -x "$CURL_BIN" ]; then
+        echo -e ""
         echo -e "${RED}Не удалось установить curl. Скрипт не сможет работать с GitHub.${NC}"
-		echo -e ""
+        echo -e ""
         read -p "Нажмите Enter..." dummy
         return 1
     fi
 }
-
 # ==========================================
 # Определение версий
 # ==========================================
