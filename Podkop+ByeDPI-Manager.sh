@@ -443,11 +443,11 @@ EOF
         reboot
         ;;
     *) 
-        echo -e "${YELLOW}Перезагрузка отложена.${NC}" 
+        echo -e "${YELLOW}Перезагрузка отложена.${NC}"
+		echo -e ""
+		read -p "Нажмите Enter..." dummy
         ;;
 esac
-echo -e ""
-read -p "Нажмите Enter..." dummy
 }
 
 # ==========================================
