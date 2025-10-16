@@ -432,22 +432,22 @@ EOF
 	echo -e ""
     echo -e "ByeDPI ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
 	echo -e ""
-	echo -ne "Нужно ${RED}обязательно${NC} перезагрузить роутер. Перезагрузить сейчас? [y/N]: "
+    echo -ne "Нужно ${RED}обязательно${NC} перезагрузить роутер. Перезагрузить сейчас? [y/N]: "
 	echo -e ""
-	read REBOOT_CHOICE
-	case "$REBOOT_CHOICE" in
-    y|Y)
-        echo -e ""
+    read REBOOT_CHOICE
+    case "$REBOOT_CHOICE" in
+	y|Y)
+		echo -e ""
         echo -e "${GREEN}Перезагрузка роутера...${NC}"
         sleep 1
         reboot
         ;;
     *) 
         echo -e "${YELLOW}Перезагрузка отложена.${NC}" 
-        echo -e ""
-        read -p "Нажмите Enter..." dummy
         ;;
 esac
+echo -e ""
+read -p "Нажмите Enter..." dummy
 }
 
 # ==========================================
