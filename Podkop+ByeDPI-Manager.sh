@@ -18,23 +18,46 @@ DGRAY='\033[38;5;236m'
 WORKDIR="/tmp/byedpi"
 
 # ==========================================
-# Функция проверки и установки curl
+# Расширяем PATH (чтобы curl точно находился)
+# ==========================================
+export PATH=$PATH:/usr/bin:/usr/sbin:/bin:/sbin
+
+# ==========================================
+# Проверка и установка curl
 # ==========================================
 curl_install() {
-    command -v curl >/dev/null 2>&1 || {
-		clear 
+    # Проверяем наличие curl
+    CURL_BIN=$(command -v curl || echo "")
+    if [ -n "$CURL_BIN" ]; then
+        return 0
+    fi
+
+    # Пытаемся установить
+    	clear 
 		echo -e ""
         echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
 		echo -e ""
-        opkg update >/dev/null 2>&1
-        opkg install curl >/dev/null 2>&1
-    }
+    opkg update >/dev/null 2>&1
+    opkg install curl -y >/dev/null 2>&1
+
+    # Проверяем после установки
+    CURL_BIN=$(command -v curl || echo "")
+    if [ -z "$CURL_BIN" ]; then
+		echo -e ""
+        echo -e "${RED}Не удалось установить curl. Скрипт не сможет работать с GitHub.${NC}"
+		echo -e ""
+        read -p "Нажмите Enter..." dummy
+        return 1
+    fi
 }
 
 # ==========================================
 # Определение версий
 # ==========================================
 get_versions() {
+
+	curl_install || return 1
+	
     # --- ByeDPI ---
     BYEDPI_VER=$(opkg list-installed | grep '^byedpi ' | awk '{print $3}' | sed 's/-r[0-9]\+$//')
     [ -z "$BYEDPI_VER" ] && BYEDPI_VER="не найдена"
@@ -42,11 +65,9 @@ get_versions() {
     LOCAL_ARCH=$(awk -F\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release)
     [ -z "$LOCAL_ARCH" ] && LOCAL_ARCH=$(opkg print-architecture | grep -v "noarch" | tail -n1 | awk '{print $2}')
 
-	curl_install
-
     # --- Получаем последнюю версию ByeDPI ---
     BYEDPI_API_URL="https://api.github.com/repos/DPITrickster/ByeDPI-OpenWrt/releases"
-    RELEASE_DATA=$(curl -s "$BYEDPI_API_URL")
+    RELEASE_DATA=$($CURL_BIN -s "$BYEDPI_API_URL")
     BYEDPI_URL=$(echo "$RELEASE_DATA" | grep browser_download_url | grep "$LOCAL_ARCH.ipk" | head -n1 | cut -d'"' -f4)
     if [ -n "$BYEDPI_URL" ]; then
         BYEDPI_FILE=$(basename "$BYEDPI_URL")
@@ -70,7 +91,7 @@ get_versions() {
     fi
 
     PODKOP_API_URL="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
-    PODKOP_LATEST_VER=$(curl -s "$PODKOP_API_URL" | grep '"tag_name"' | head -n1 | cut -d'"' -f4 | sed 's/-r[0-9]\+$//')
+    PODKOP_LATEST_VER=$($CURL_BIN -s "$PODKOP_API_URL" | grep '"tag_name"' | head -n1 | cut -d'"' -f4 | sed 's/-r[0-9]\+$//')
     [ -z "$PODKOP_LATEST_VER" ] && PODKOP_LATEST_VER="не найдена"
 
     # --- Нормализация версий ---
@@ -129,7 +150,7 @@ install_update() {
 	echo -e "${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
     mkdir -p "$WORKDIR"
     cd "$WORKDIR" || return
-    curl -L -s -o "$LATEST_FILE" "$LATEST_URL" || {
+    $CURL_BIN -L -s -o "$LATEST_FILE" "$LATEST_URL" || {
         echo -e "${RED}Ошибка загрузки ${NC}$LATEST_FILE"
         read -p "Нажмите Enter..." dummy
         return
