@@ -378,42 +378,37 @@ integration_byedpi_podkop() {
 
     # Создаём / меняем /etc/config/podkop
     cat <<EOF >/etc/config/podkop
-config main 'main'
-	option mode 'proxy'
-	option proxy_config_type 'outbound'
-	option community_lists_enabled '1'
-	option user_domain_list_type 'disabled'
-	option local_domain_lists_enabled '0'
-	option remote_domain_lists_enabled '0'
-	option user_subnet_list_type 'disabled'
-	option local_subnet_lists_enabled '0'
-	option remote_subnet_lists_enabled '0'
-	option all_traffic_from_ip_enabled '0'
-	option exclude_from_ip_enabled '0'
-	option yacd '0'
-	option socks5 '0'
-	option exclude_ntp '0'
-	option quic_disable '0'
-	option dont_touch_dhcp '0'
-	option update_interval '1d'
+config settings 'settings'
 	option dns_type 'udp'
 	option dns_server '8.8.8.8'
+	option bootstrap_dns_server '77.88.8.8'
 	option dns_rewrite_ttl '60'
+	list source_network_interfaces 'br-lan'
+	option enable_output_network_interface '0'
+	option enable_badwan_interface_monitoring '0'
+	option enable_yacd '0'
+	option disable_quic '0'
+	option update_interval '1d'
+	option download_lists_via_proxy '0'
+	option dont_touch_dhcp '0'
 	option config_path '/etc/sing-box/config.json'
 	option cache_path '/tmp/sing-box/cache.db'
-	list iface 'br-lan'
-	option mon_restart_ifaces '0'
-	option ss_uot '0'
-	option detour '0'
+	option exclude_ntp '0'
 	option shutdown_correctly '0'
+
+config section 'main'
+	option connection_type 'proxy'
+	option proxy_config_type 'outbound'
+	option enable_udp_over_tcp '0'
+	list community_lists 'russia_inside'
 	option outbound_json '{
   "type": "socks",
   "server": "127.0.0.1",
   "server_port": 1080
 }'
-	option bootstrap_dns_server '77.88.8.8'
-	list community_lists 'russia_inside'
-	list community_lists 'hodca'
+	option user_domain_list_type 'disabled'
+	option user_subnet_list_type 'disabled'
+	option mixed_proxy_enabled '0'
 EOF
 
     echo -e "${GREEN}Запуск ${NC}ByeDPI${GREEN}...${NC}"
