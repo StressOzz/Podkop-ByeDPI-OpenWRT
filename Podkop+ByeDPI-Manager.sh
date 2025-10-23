@@ -372,7 +372,7 @@ integration_byedpi_podkop() {
     if [ -f /etc/config/byedpi ]; then
         sed -i "s|option cmd_opts .*| option cmd_opts '-o2 --auto=t,r,a,s -d2'|" /etc/config/byedpi
     fi
-
+echo -e "${GREEN}Меняем конфигурацию в ${NC}Podkop${GREEN}...${NC}"
     # Создаём / меняем /etc/config/podkop
     cat <<EOF >/etc/config/podkop
 config settings 'settings'
@@ -397,7 +397,6 @@ config section 'main'
 	option connection_type 'proxy'
 	option proxy_config_type 'outbound'
 	option enable_udp_over_tcp '0'
-	list community_lists 'russia_inside'
 	option outbound_json '{
   "type": "socks",
   "server": "127.0.0.1",
@@ -406,6 +405,7 @@ config section 'main'
 	option user_domain_list_type 'disabled'
 	option user_subnet_list_type 'disabled'
 	option mixed_proxy_enabled '0'
+	list community_lists 'russia_inside'
 EOF
 
     echo -e "${GREEN}Запуск ${NC}ByeDPI${GREEN}...${NC}"
@@ -529,7 +529,7 @@ fi
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║     ${BLUE}Podkop+ByeDPI Manager${NC}     ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "                             ${DGRAY}v2.2${NC}"
+	echo -e "                             ${DGRAY}v2.3${NC}"
 
 	check_podkop_status
 	check_byedpi_status
