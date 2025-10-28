@@ -74,6 +74,11 @@ uci set dhcp.@dnsmasq[0].localuse='0'
 uci commit dhcp
 ```
 
+и вполнить
+```
+/etc/init.d/dnsmasq restart
+```
+
 ---
 
 ## 2. Настройка Podkop
