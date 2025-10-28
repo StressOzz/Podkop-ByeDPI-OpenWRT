@@ -405,8 +405,7 @@ config section 'main'
 	option user_domain_list_type 'disabled'
 	option user_subnet_list_type 'disabled'
 	option mixed_proxy_enabled '0'
-	list community_lists 'russia_inside'
-	list community_lists 'meta'
+	list community_lists 'youtube'
 EOF
 
     echo -e "${GREEN}Запуск ${NC}ByeDPI${GREEN}...${NC}"
