@@ -1,4 +1,3 @@
-
 #!/bin/sh
 # ==========================================
 # ByeDPI & Podkop Manager by StressOzz
