@@ -24,9 +24,7 @@ WORKDIR="/tmp/byedpi"
 curl_install() {
     command -v curl >/dev/null 2>&1 || {
 		clear 
-		echo -e ""
-        echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
-		echo -e ""
+        echo -e "\n${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}\n"
         opkg update >/dev/null 2>&1
         opkg install curl >/dev/null 2>&1
     }
@@ -112,20 +110,16 @@ check_byedpi_status() {
 # ==========================================
 install_update() {
     clear
-	echo -e ""
     echo -e "${MAGENTA}Установка / обновление ByeDPI${NC}"
     get_versions
 
     [ -z "$LATEST_URL" ] && {
-        echo -e ""
-		echo -e "${RED}Последняя версия ByeDPI не найдена. Установка пропущена.${NC}"
-        echo -e ""
+		echo -e "\n${RED}Последняя версия ByeDPI не найдена. Установка пропущена.${NC}\n"
 		read -p "Нажмите Enter..." dummy
         return
     }
 
-    echo -e ""
-	echo -e "${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
+	echo -e "\n${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
     mkdir -p "$WORKDIR"
     cd "$WORKDIR" || return
     curl -L -s -o "$LATEST_FILE" "$LATEST_URL" || {
@@ -137,11 +131,9 @@ install_update() {
 	echo -e "${GREEN}Устанавливаем${NC} ${WHITE}$LATEST_FILE${NC}"
     opkg install --force-reinstall "$LATEST_FILE" >/dev/null 2>&1
     rm -rf "$WORKDIR"
-	echo -e ""
 	/etc/init.d/byedpi enable >/dev/null 2>&1
     /etc/init.d/byedpi start >/dev/null 2>&1
-    echo -e "ByeDPI ${GREEN}успешно установлен / обновлён!${NC}"
-	echo -e ""
+    echo -e "\nByeDPI ${GREEN}успешно установлен / обновлён!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -150,7 +142,6 @@ install_update() {
 # ==========================================
 uninstall_byedpi() {
     clear
-	echo -e ""
     echo -e "${MAGENTA}Удаление ByeDPI${NC}"
     [ -f /etc/init.d/byedpi ] && {
         /etc/init.d/byedpi stop >/dev/null 2>&1
@@ -158,9 +149,7 @@ uninstall_byedpi() {
     }
     opkg remove --force-removal-of-dependent-packages byedpi >/dev/null 2>&1
     rm -rf /etc/init.d/byedpi /opt/byedpi /etc/config/byedpi
-	echo -e ""
-    echo -e "${GREEN}ByeDPI удалён полностью.${NC}"
-	echo -e ""
+    echo -e "\n${GREEN}ByeDPI удалён полностью.${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -169,9 +158,7 @@ uninstall_byedpi() {
 # ==========================================
 install_podkop() {
     clear
-    echo -e ""
-    echo -e "${MAGENTA}Установка / обновление Podkop${NC}"
-    echo -e ""
+    echo -e "${MAGENTA}Установка / обновление Podkop${NC}\n"
 
     REPO="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
     DOWNLOAD_DIR="/tmp/podkop"
@@ -340,8 +327,7 @@ pkg_list_update || {
     # Очистка
     rm -rf "$DOWNLOAD_DIR"
 
-    echo -e "Podkop ${GREEN}успешно установлен / обновлён!${NC}"
-    echo -e ""
+    echo -e "Podkop ${GREEN}успешно установлен / обновлён!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -350,14 +336,11 @@ pkg_list_update || {
 # ==========================================
 integration_byedpi_podkop() {
     clear
-	echo -e ""
-    echo -e "${MAGENTA}Интеграция ByeDPI в Podkop${NC}"
-	echo -e ""
+    echo -e "${MAGENTA}Интеграция ByeDPI в Podkop${NC}\n"
 
 	# Проверяем установлен ли ByeDPI
     if ! command -v byedpi >/dev/null 2>&1 && [ ! -f /etc/init.d/byedpi ]; then
-		echo -e "${YELLOW}ByeDPI не установлен.${NC}"
-		echo -e ""
+		echo -e "${YELLOW}ByeDPI не установлен.${NC}\n"
         read -p "Нажмите Enter..." dummy
         return
     fi
@@ -419,24 +402,21 @@ EOF
     podkop restart >/dev/null 2>&1
     echo -e "${GREEN}Обновляем списки...${NC}"
     podkop list_update >/dev/null 2>&1
-	echo -e ""
-    echo -e "Podkop ${GREEN}готов к работе.${NC}"
-	echo -e ""
-    echo -e "ByeDPI ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
-	echo -e ""
-    echo -ne "Нужно ${RED}обязательно${NC} перезагрузить роутер. Перезагрузить сейчас? [y/N]: "
-	echo -e ""
+
+    echo -e "\nPodkop ${GREEN}готов к работе.${NC}"
+
+    echo -e "\nByeDPI ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
+    echo -ne "\nНужно ${RED}обязательно${NC} перезагрузить роутер. Перезагрузить сейчас? [y/N]: \n"
     read REBOOT_CHOICE
     case "$REBOOT_CHOICE" in
 	y|Y)
-		echo -e ""
-        echo -e "${GREEN}Перезагрузка роутера...${NC}"
+
+        echo -e "\n${GREEN}Перезагрузка роутера...${NC}"
         sleep 1
         reboot
         ;;
     *)
-        echo -e "${YELLOW}Перезагрузка отложена.${NC}"
-		echo -e ""
+        echo -e "${YELLOW}Перезагрузка отложена.${NC}\n"
 		read -p "Нажмите Enter..." dummy
         ;;
 esac
@@ -447,17 +427,14 @@ esac
 # ==========================================
 fix_strategy() {
     clear
-    echo -e ""
     echo -e "${MAGENTA}Изменение стратегии ByeDPI${NC}"
 
     if [ -f /etc/config/byedpi ]; then
         # Получаем текущую стратегию
         CURRENT_STRATEGY=$(grep "option cmd_opts" /etc/config/byedpi | sed -E "s/.*'(.+)'/\1/")
         [ -z "$CURRENT_STRATEGY" ] && CURRENT_STRATEGY="(не задана)"
-        echo -e ""
-        echo -e "${GREEN}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
-        echo -e ""
-        echo -ne "${YELLOW}Введите новую стратегию (Enter — оставить текущую):${NC} "
+        echo -e "\n${GREEN}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
+        echo -ne "\n${YELLOW}Введите новую стратегию (Enter — оставить текущую):${NC} "
 		read NEW_STRATEGY
         echo -e ""
         if [ -z "$NEW_STRATEGY" ]; then
@@ -469,8 +446,7 @@ fix_strategy() {
             echo -e "${GREEN}Стратегия изменена на:${NC} ${WHITE}$NEW_STRATEGY${NC}"
         fi
     else
-		echo -e ""
-        echo -e "${YELLOW}ByeDPI не установлен.${NC}"
+        echo -e "\n${YELLOW}ByeDPI не установлен.${NC}"
     fi
     echo -e ""
     read -p "Нажмите Enter..." dummy
@@ -481,7 +457,6 @@ fix_strategy() {
 # ==========================================
 uninstall_podkop() {
     clear
-    echo -e ""
     echo -e "${MAGENTA}Удаление Podkop${NC}"
     
     # Удаляем пакеты
@@ -493,9 +468,7 @@ uninstall_podkop() {
     # Удаляем все файлы в /etc/config с именем содержащим podkop
     rm -f /etc/config/*podkop* >/dev/null 2>&1
 
-    echo -e ""
-    echo -e "${GREEN}Podkop удалён полностью.${NC}"
-    echo -e ""
+    echo -e "\n${GREEN}Podkop удалён полностью.${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -525,7 +498,6 @@ else
     CURRENT_STRATEGY="не найдена"
 fi
 	clear
-	echo -e ""
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║     ${BLUE}Podkop+ByeDPI Manager${NC}     ║"
 	echo -e "╚═══════════════════════════════╝"
@@ -538,14 +510,11 @@ fi
 	echo -e "${YELLOW}Установленная версия:${NC} $BYEDPI_STATUS"
 	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$BYEDPI_LATEST_VER${NC}"
 	echo -e "${YELLOW}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
-	echo -e ""
-	echo -e "${MAGENTA}--- Podkop ---${NC}"
+	echo -e "\n${MAGENTA}--- Podkop ---${NC}"
 	echo -e "${YELLOW}Установленная версия:${NC} $PODKOP_STATUS"
 	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$PODKOP_LATEST_VER${NC}"
-	echo -e ""
-	echo -e "${YELLOW}Архитектура устройства:${NC} $LOCAL_ARCH"
-	echo -e ""
-    echo -e "${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
+	echo -e "\n${YELLOW}Архитектура устройства:${NC} $LOCAL_ARCH"
+    echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
     echo -e "${CYAN}2) ${GREEN}Удалить ${NC}ByeDPI"
     echo -e "${CYAN}3) ${GREEN}Интегрировать ${NC}ByeDPI ${GREEN}в ${NC}Podkop"
     echo -e "${CYAN}4) ${GREEN}Изменить текущую стратегию ${NC}ByeDPI"
@@ -554,8 +523,7 @@ fi
 	echo -e "${CYAN}7) ${GREEN}Установить ${NC}ByeDPI ${GREEN}+ ${NC}Podkop ${GREEN}+ ${NC}Интеграция"
 	echo -e "${CYAN}8) ${GREEN}Перезагрузить устройство${NC}"
 	echo -e "${CYAN}9) ${GREEN}Выход (Enter)${NC}"
-	echo -e ""
-    echo -ne "${YELLOW}Выберите пункт:${NC} "
+    echo -ne "\n${YELLOW}Выберите пункт:${NC} "
     read choice
 
     case "$choice" in
@@ -567,9 +535,7 @@ fi
 		6) uninstall_podkop ;;
 		7) full_install_integration ;;
 		8) 
-		echo -e ""
-		echo -e "${RED}Перезагрузка${NC}"
-		echo -e ""
+		echo -e "\n${RED}Перезагрузка${NC}\n"
         sleep 1
         reboot
 		;;
@@ -583,7 +549,3 @@ fi
 while true; do
     show_menu
 done
-
-когда я нажимаю y что бы перезагрузится, он презагружает, но перед этим пишет
-нажмите Enter
-как это убрать
