@@ -158,3 +158,8 @@ sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-ByeDPI-OpenWRT
 - **[DPITrickster](https://github.com/DPITrickster)** за версию ByeDPI для OpenWRT и за написание гайда по ручной установке
 ---
 😏Делал для себя, проверял на себе — выжили оба. Если у вас иначе, ну… прошу прощения😅
+
+---
+
+[<img width="190" height="175" alt="donate-button-click-donation-charity-600nw-2339825981" src="https://github.com/user-attachments/assets/2999757b-fbf3-4149-bf6c-48bf3e241529" />](https://github.com/StressOzz#-поддержать-проект)
+
