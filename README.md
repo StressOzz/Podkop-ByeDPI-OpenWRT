@@ -59,6 +59,8 @@ sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-ByeDPI-OpenWRT
 
 **Пункт 3)**
 
+- Удаляет все ваши настройки Podkop !
+
 - DNS локальный отключается (`uci set dhcp.@dnsmasq[0].localuse=0`)
 
 - Перезапускается `dnsmasq`
