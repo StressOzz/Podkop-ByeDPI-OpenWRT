@@ -23,10 +23,129 @@ WORKDIR="/tmp/byedpi"
 curl_install() {
     command -v curl >/dev/null 2>&1 || {
 		clear 
-        echo -e "\n${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}\n"
-        opkg update >/dev/null 2>&1
-        opkg install curl >/dev/null 2>&1
+        echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
+		opkg update >/dev/null 2>&1 || { echo -e "\n${RED}Ошибка при обновлении списка пакетов!${NC}\n"; read -p "Нажмите Enter..." dummy; }
+		opkg install curl >/dev/null 2>&1 || { echo -e "\n${RED}Не удалось установить curl!${NC}\n"; read -p "Нажмите Enter..." dummy; }
     }
+}
+# ==========================================
+# AWG
+# ==========================================
+install_AWG() {
+echo -e "\n${MAGENTA}Устанавливаем AWG + интерфейс${NC}"
+echo -e "${GREEN}Обновляем список пакетов${NC}"
+opkg update >/dev/null 2>&1 || { echo -e "\n${RED}Ошибка при обновлении списка пакетов!${NC}\n"; exit 1; }
+echo -e "${GREEN}Определяем архитектуру и версию OpenWrt${NC}"
+PKGARCH=$(opkg print-architecture | awk 'BEGIN {max=0} {if ($3 > max) {max = $3; arch = $2}} END {print arch}')
+TARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' -f1)
+SUBTARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' -f2)
+VERSION=$(ubus call system board | jsonfilter -e '@.release.version')
+PKGPOSTFIX="_v${VERSION}_${PKGARCH}_${TARGET}_${SUBTARGET}.ipk"
+BASE_URL="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/"
+AWG_DIR="/tmp/amneziawg"
+mkdir -p "$AWG_DIR"
+install_pkg() {
+local pkgname=$1
+local filename="${pkgname}${PKGPOSTFIX}"
+local url="${BASE_URL}v${VERSION}/${filename}"
+echo -e "${CYAN}Скачиваем ${NC}$pkgname"
+if wget -O "$AWG_DIR/$filename" "$url" >/dev/null 2>&1 ; then
+echo -e "${CYAN}Устанавливаем ${NC}$pkgname"
+if opkg install "$AWG_DIR/$filename" >/dev/null 2>&1 ; then
+echo -e "$pkgname ${GREEN}установлен успешно${NC}"
+else
+echo -e "\n${RED}Ошибка установки $pkgname!${NC}\n"
+exit 1
+fi
+else
+echo -e "\n${RED}Ошибка! Не удалось скачать $file${NC}\n"
+exit 1
+fi
+}
+install_pkg "kmod-amneziawg"
+install_pkg "amneziawg-tools"
+install_pkg "luci-proto-amneziawg"
+echo -e "${GREEN}Русская локализацию установлена${NC}"
+install_pkg "luci-i18n-amneziawg-ru" >/dev/null 2>&1 || echo -e "${RED}Внимание: русская локализация не установлена (не критично)${NC}"
+rm -rf "$AWG_DIR"
+/etc/init.d/network restart >/dev/null 2>&1
+echo -e "AmneziaWG ${GREEN}установлен!${NC}"
+
+echo -e "${MAGENTA}Устанавливаем интерфейс AWG${NC}"
+IF_NAME="AWG"
+PROTO="amneziawg"
+DEV_NAME="amneziawg0"
+if grep -q "config interface '$IF_NAME'" /etc/config/network; then
+echo -e "${RED}Интерфейс ${NC}$IF_NAME${RED} уже существует${NC}"
+else
+echo -e "${CYAN}Добавляем интерфейс ${NC}$IF_NAME"
+uci batch <<EOF
+set network.$IF_NAME=interface
+set network.$IF_NAME.proto=$PROTO
+set network.$IF_NAME.device=$DEV_NAME
+commit network
+EOF
+fi
+echo -e "${CYAN}Перезапускаем сеть${NC}"
+/etc/init.d/network restart
+/etc/init.d/firewall restart
+/etc/init.d/uhttpd restart
+echo -e "${GREEN}Интерфейс ${NC}$IF_NAME${GREEN} создан и активирован!${NC}\n"
+read -p "Нажмите Enter..." dummy
+}
+
+# ==========================================
+# Интеграция AWG
+# ==========================================
+integration_AWG() {
+
+echo -e "\n${MAGENTA}Интегрируем AWG в Podkop${NC}"
+
+echo -e "${GREEN}Меняем конфигурацию в ${NC}Podkop${GREEN}...${NC}"
+    # Создаём / меняем /etc/config/podkop
+    cat <<EOF >/etc/config/podkop
+config settings 'settings'
+	option dns_type 'udp'
+	option dns_server '8.8.8.8'
+	option bootstrap_dns_server '77.88.8.8'
+	option dns_rewrite_ttl '60'
+	list source_network_interfaces 'br-lan'
+	option enable_output_network_interface '0'
+	option enable_badwan_interface_monitoring '0'
+	option enable_yacd '0'
+	option disable_quic '0'
+	option update_interval '1d'
+	option download_lists_via_proxy '0'
+	option dont_touch_dhcp '0'
+	option config_path '/etc/sing-box/config.json'
+	option cache_path '/tmp/sing-box/cache.db'
+	option exclude_ntp '0'
+	option shutdown_correctly '0'
+
+config section 'main'
+	option connection_type 'vpn'
+	option interface 'AWG'
+	option domain_resolver_enabled '0'
+	option user_domain_list_type 'disabled'
+	option user_subnet_list_type 'disabled'
+	option mixed_proxy_enabled '0'
+	list community_lists 'hodca'
+	list community_lists 'russia_inside'
+	list community_lists 'meta'
+EOF
+
+echo -e "AWG ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
+echo -e "${CYAN}Запускаем ${NC}Podkop${NC}"
+podkop enable >/dev/null 2>&1
+echo -e "${CYAN}Применяем конфигурацию${NC}"
+podkop reload >/dev/null 2>&1
+podkop restart >/dev/null 2>&1
+echo -e "${CYAN}Обновляем списки${NC}"
+podkop list_update >/dev/null 2>&1
+echo -e "${CYAN}Перезапускаем сервис${NC}"
+podkop restart >/dev/null 2>&1
+echo -e "Podkop ${GREEN}готов к работе!${NC}\n"
+read -p "Нажмите Enter..." dummy
 }
 
 # ==========================================
@@ -49,9 +168,9 @@ get_versions() {
     if [ -n "$BYEDPI_URL" ]; then
         BYEDPI_FILE=$(basename "$BYEDPI_URL")
         BYEDPI_LATEST_VER=$(echo "$BYEDPI_FILE" | sed -E 's/^byedpi_([0-9]+\.[0-9]+\.[0-9]+)(-r[0-9]+)?_.*/\1/')
-        LATEST_VER="$BYEDPI_LATEST_VER"      # добавляем для install_update
-        LATEST_URL="$BYEDPI_URL"            # добавляем для install_update
-        LATEST_FILE="$BYEDPI_FILE"          # добавляем для install_update
+        LATEST_VER="$BYEDPI_LATEST_VER"
+        LATEST_URL="$BYEDPI_URL"
+        LATEST_FILE="$BYEDPI_FILE"
     else
         BYEDPI_LATEST_VER="не найдена"
         LATEST_VER=""
@@ -107,9 +226,8 @@ check_byedpi_status() {
 # ==========================================
 # Установка / обновление ByeDPI
 # ==========================================
-install_update() {
-    clear
-    echo -e "${MAGENTA}Установка / обновление ByeDPI${NC}"
+install_ByeDPI() {
+    echo -e "\n${MAGENTA}Установка / обновление ByeDPI${NC}"
     get_versions
 
     [ -z "$LATEST_URL" ] && {
@@ -118,7 +236,7 @@ install_update() {
         return
     }
 
-	echo -e "\n${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
+	echo -e "${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
     mkdir -p "$WORKDIR"
     cd "$WORKDIR" || return
     curl -L -s -o "$LATEST_FILE" "$LATEST_URL" || {
@@ -132,7 +250,7 @@ install_update() {
     rm -rf "$WORKDIR"
 	/etc/init.d/byedpi enable >/dev/null 2>&1
     /etc/init.d/byedpi start >/dev/null 2>&1
-    echo -e "\nByeDPI ${GREEN}успешно установлен / обновлён!${NC}\n"
+    echo -e "ByeDPI ${GREEN}успешно установлен / обновлён!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -140,15 +258,14 @@ install_update() {
 # Удаление ByeDPI
 # ==========================================
 uninstall_byedpi() {
-    clear
-    echo -e "${MAGENTA}Удаление ByeDPI${NC}"
+    echo -e "\n${MAGENTA}Удаление ByeDPI${NC}"
     [ -f /etc/init.d/byedpi ] && {
         /etc/init.d/byedpi stop >/dev/null 2>&1
         /etc/init.d/byedpi disable >/dev/null 2>&1
     }
     opkg remove --force-removal-of-dependent-packages byedpi >/dev/null 2>&1
     rm -rf /etc/init.d/byedpi /opt/byedpi /etc/config/byedpi
-    echo -e "\n${GREEN}ByeDPI удалён полностью.${NC}\n"
+    echo -e "${GREEN}ByeDPI удалён!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -156,8 +273,7 @@ uninstall_byedpi() {
 # Установка / обновление Podkop
 # ==========================================
 install_podkop() {
-    clear
-    echo -e "${MAGENTA}Установка / обновление Podkop${NC}\n"
+    echo -e "\n${MAGENTA}Установка / обновление Podkop${NC}"
 
     REPO="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
     DOWNLOAD_DIR="/tmp/podkop"
@@ -314,12 +430,8 @@ pkg_list_update || {
             pkg_remove luci-i18n-podkop* >/dev/null 2>&1
             pkg_install "$DOWNLOAD_DIR/$ru"
         else
-            msg "Установить русский интерфейс? y/N"
-            read -r RUS
-            case "$RUS" in
-                y|Y) pkg_install "$DOWNLOAD_DIR/$ru" ;;
-                *) ;;
-            esac
+			pkg_install "$DOWNLOAD_DIR/$ru"
+
         fi
     fi
 
@@ -334,8 +446,7 @@ pkg_list_update || {
 # Интеграция ByeDPI в Podkop
 # ==========================================
 integration_byedpi_podkop() {
-    clear
-    echo -e "${MAGENTA}Интеграция ByeDPI в Podkop${NC}\n"
+    echo -e "\n${MAGENTA}Интеграция ByeDPI в Podkop${NC}"
 
 	# Проверяем установлен ли ByeDPI
     if ! command -v byedpi >/dev/null 2>&1 && [ ! -f /etc/init.d/byedpi ]; then
@@ -402,9 +513,9 @@ EOF
     echo -e "${GREEN}Обновляем списки...${NC}"
     podkop list_update >/dev/null 2>&1
 
-    echo -e "\nPodkop ${GREEN}готов к работе.${NC}"
+    echo -e "Podkop ${GREEN}готов к работе.${NC}"
 
-    echo -e "\nByeDPI ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
+    echo -e "ByeDPI ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
     echo -ne "\nНужно ${RED}обязательно${NC} перезагрузить роутер. Перезагрузить сейчас? [y/N]: \n"
     read REBOOT_CHOICE
     case "$REBOOT_CHOICE" in
@@ -425,8 +536,8 @@ esac
 # Изменение стратегии ByeDPI
 # ==========================================
 fix_strategy() {
-    clear
-    echo -e "${MAGENTA}Изменение стратегии ByeDPI${NC}"
+
+    echo -e "\n${MAGENTA}Изменение стратегии ByeDPI${NC}"
 
     if [ -f /etc/config/byedpi ]; then
         # Получаем текущую стратегию
@@ -435,19 +546,18 @@ fix_strategy() {
         echo -e "\n${GREEN}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
         echo -ne "\n${YELLOW}Введите новую стратегию (Enter — оставить текущую):${NC} "
 		read NEW_STRATEGY
-        echo -e ""
+        echo
         if [ -z "$NEW_STRATEGY" ]; then
-            echo -e "${GREEN}Стратегия не изменена.${NC}"
+            echo -e "${GREEN}Стратегия не изменена.${NC}\n"
         else
             sed -i "s|option cmd_opts .*| option cmd_opts '$NEW_STRATEGY'|" /etc/config/byedpi
 			/etc/init.d/byedpi enable >/dev/null 2>&1
 			/etc/init.d/byedpi start >/dev/null 2>&1
-            echo -e "${GREEN}Стратегия изменена на:${NC} ${WHITE}$NEW_STRATEGY${NC}"
+            echo -e "${GREEN}Стратегия изменена на:${NC} ${WHITE}$NEW_STRATEGY${NC}\n"
         fi
     else
-        echo -e "\n${YELLOW}ByeDPI не установлен.${NC}"
+        echo -e "\n${YELLOW}ByeDPI не установлен.${NC}\n"
     fi
-    echo -e ""
     read -p "Нажмите Enter..." dummy
 }
 
@@ -455,8 +565,7 @@ fix_strategy() {
 # Удаление Podkop
 # ==========================================
 uninstall_podkop() {
-    clear
-    echo -e "${MAGENTA}Удаление Podkop${NC}"
+    echo -e "\n${MAGENTA}Удаление Podkop${NC}"
     
     # Удаляем пакеты
     opkg remove luci-i18n-podkop-ru luci-app-podkop podkop --autoremove >/dev/null 2>&1 || true
@@ -467,18 +576,8 @@ uninstall_podkop() {
     # Удаляем все файлы в /etc/config с именем содержащим podkop
     rm -f /etc/config/*podkop* >/dev/null 2>&1
 
-    echo -e "\n${GREEN}Podkop удалён полностью.${NC}\n"
+    echo -e "Podkop ${GREEN}удалён полностью.${NC}\n"
     read -p "Нажмите Enter..." dummy
-}
-
-
-# ==========================================
-# Полная установка и интеграция
-# ==========================================
-full_install_integration() {
-    install_update
-    install_podkop
-    integration_byedpi_podkop
 }
 
 # ==========================================
@@ -498,9 +597,9 @@ else
 fi
 	clear
 	echo -e "╔═══════════════════════════════╗"
-	echo -e "║     ${BLUE}Podkop+ByeDPI Manager${NC}     ║"
+	echo -e "║         ${BLUE}Podkop Manager${NC}        ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "                             ${DGRAY}v2.3${NC}"
+	echo -e "                             ${DGRAY}v2.4${NC}"
 
 	check_podkop_status
 	check_byedpi_status
@@ -509,32 +608,52 @@ fi
 	echo -e "${YELLOW}Установленная версия:${NC} $BYEDPI_STATUS"
 	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$BYEDPI_LATEST_VER${NC}"
 	echo -e "${YELLOW}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
-	echo -e "\n${MAGENTA}--- Podkop ---${NC}"
+	echo -e "${MAGENTA}--- Podkop ---${NC}"
 	echo -e "${YELLOW}Установленная версия:${NC} $PODKOP_STATUS"
 	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$PODKOP_LATEST_VER${NC}"
-	echo -e "\n${YELLOW}Архитектура устройства:${NC} $LOCAL_ARCH"
-    echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
+
+	echo -e "${MAGENTA}--- AWG ---${NC}"
+if command -v amneziawg >/dev/null 2>&1 || opkg list-installed | grep -q "^amneziawg-tools"; then
+    echo -e "${YELLOW}AWG: ${GREEN}установлен${NC}"
+else
+    echo -e "${YELLOW}AWG: ${RED}не установлен${NC}"
+fi
+
+if uci -q get network.AWG >/dev/null; then
+    echo -e "${YELLOW}Интерфейс AWG: ${GREEN}установлен${NC}"
+else
+    echo -e "${YELLOW}Интерфейс AWG: ${RED}не установлен${NC}"
+fi
+
+
+	
+  echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
     echo -e "${CYAN}2) ${GREEN}Удалить ${NC}ByeDPI"
-    echo -e "${CYAN}3) ${GREEN}Интегрировать ${NC}ByeDPI ${GREEN}в ${NC}Podkop"
-    echo -e "${CYAN}4) ${GREEN}Изменить текущую стратегию ${NC}ByeDPI"
-    echo -e "${CYAN}5) ${GREEN}Установить / обновить ${NC}Podkop"
-	echo -e "${CYAN}6) ${GREEN}Удалить ${NC}Podkop"
-	echo -e "${CYAN}7) ${GREEN}Установить ${NC}ByeDPI ${GREEN}+ ${NC}Podkop ${GREEN}+ ${NC}Интеграция"
-	echo -e "${CYAN}8) ${GREEN}Перезагрузить устройство${NC}"
-	echo -e "${CYAN}9) ${GREEN}Выход (Enter)${NC}"
+ 	echo -e "${CYAN}3) ${GREEN}Установить / обновить ${NC}Podkop"
+	echo -e "${CYAN}4) ${GREEN}Удалить ${NC}Podkop"
+    echo -e "${CYAN}5) ${GREEN}Интегрировать ${NC}ByeDPI ${GREEN}в ${NC}Podkop"
+    echo -e "${CYAN}6) ${GREEN}Изменить текущую стратегию ${NC}ByeDPI"
+
+	echo -e "${CYAN}7) ${GREEN}Установить ${NC}AWG ${GREEN}+${NC} интерфейс"
+	echo -e "${CYAN}8) ${GREEN}Интегрировать ${NC}AWG ${GREEN}в ${NC}Podkop"
+
+	echo -e "${CYAN}0) ${GREEN}Перезагрузить устройство${NC}"
+	echo -e "${CYAN}Enter) ${GREEN}Выход (Enter)${NC}"
     echo -ne "\n${YELLOW}Выберите пункт:${NC} "
     read choice
 
     case "$choice" in
-        1) install_update ;;
+        1) install_ByeDPI ;;
         2) uninstall_byedpi ;;
-        3) integration_byedpi_podkop ;;
-        4) fix_strategy ;;
-        5) install_podkop ;;
-		6) uninstall_podkop ;;
-		7) full_install_integration ;;
-		8) 
-		echo -e "\n${RED}Перезагрузка${NC}\n"
+        3) install_podkop ;;
+		4) uninstall_podkop ;;
+		5) integration_byedpi_podkop ;;
+        6) fix_strategy ;;
+		7) install_AWG ;;
+		8) integration_AWG ;;
+
+
+		0) echo -e "\n${RED}Перезагрузка${NC}\n"
         sleep 1
         reboot
 		;;
