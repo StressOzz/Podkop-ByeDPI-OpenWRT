@@ -41,7 +41,7 @@ TARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' 
 SUBTARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' -f2)
 VERSION=$(ubus call system board | jsonfilter -e '@.release.version')
 PKGPOSTFIX="_v${VERSION}_${PKGARCH}_${TARGET}_${SUBTARGET}.ipk"
-BASE_URL="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/"
+BASE_URL="https://github.com/FreeRKN/awg-openwrt/releases/download/"
 AWG_DIR="/tmp/amneziawg"
 mkdir -p "$AWG_DIR"
 install_pkg() {
