@@ -599,7 +599,7 @@ fi
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║         ${BLUE}Podkop Manager${NC}        ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "               ${DGRAY}by StressOzz vv2.4${NC}"
+	echo -e "                ${DGRAY}by StressOzz v2.4${NC}"
 
 	check_podkop_status
 	check_byedpi_status
@@ -625,8 +625,6 @@ else
     echo -e "${YELLOW}Интерфейс AWG: ${RED}не установлен${NC}"
 fi
 
-
-	
 	echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
     echo -e "${CYAN}2) ${GREEN}Удалить ${NC}ByeDPI"
  	echo -e "${CYAN}3) ${GREEN}Установить / обновить ${NC}Podkop"
