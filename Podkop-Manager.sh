@@ -13,7 +13,7 @@ NC="\033[0m"
 WHITE="\033[1;37m"
 BLUE="\033[0;34m"
 GRAY='\033[38;5;239m'
-DGRAY='\033[38;5;236m'
+DGRAY="\033[38;5;244m"
 
 WORKDIR="/tmp/byedpi"
 
@@ -599,7 +599,7 @@ fi
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║         ${BLUE}Podkop Manager${NC}        ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "                             ${DGRAY}v2.4${NC}"
+	echo -e "               ${DGRAY}by StressOzz vv2.4${NC}"
 
 	check_podkop_status
 	check_byedpi_status
@@ -627,18 +627,16 @@ fi
 
 
 	
-  echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
+	echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
     echo -e "${CYAN}2) ${GREEN}Удалить ${NC}ByeDPI"
  	echo -e "${CYAN}3) ${GREEN}Установить / обновить ${NC}Podkop"
 	echo -e "${CYAN}4) ${GREEN}Удалить ${NC}Podkop"
     echo -e "${CYAN}5) ${GREEN}Интегрировать ${NC}ByeDPI ${GREEN}в ${NC}Podkop"
     echo -e "${CYAN}6) ${GREEN}Изменить текущую стратегию ${NC}ByeDPI"
-
 	echo -e "${CYAN}7) ${GREEN}Установить ${NC}AWG ${GREEN}+${NC} интерфейс"
 	echo -e "${CYAN}8) ${GREEN}Интегрировать ${NC}AWG ${GREEN}в ${NC}Podkop"
-
 	echo -e "${CYAN}0) ${GREEN}Перезагрузить устройство${NC}"
-	echo -e "${CYAN}Enter) ${GREEN}Выход (Enter)${NC}"
+	echo -e "${CYAN}Enter) ${GREEN}Выход${NC}"
     echo -ne "\n${YELLOW}Выберите пункт:${NC} "
     read choice
 
@@ -651,8 +649,6 @@ fi
         6) fix_strategy ;;
 		7) install_AWG ;;
 		8) integration_AWG ;;
-
-
 		0) echo -e "\n${RED}Перезагрузка${NC}\n"
         sleep 1
         reboot
