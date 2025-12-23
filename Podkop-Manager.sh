@@ -17,25 +17,21 @@ DGRAY="\033[38;5;244m"
 
 WORKDIR="/tmp/byedpi"
 
-# ==========================================
-# Функция проверки и установки curl
-# ==========================================
-curl_install() {
-    command -v curl >/dev/null 2>&1 || {
-		clear 
-        echo -e "${CYAN}Устанавливаем${NC} ${WHITE}curl ${CYAN}для загрузки информации с ${WHITE}GitHub${NC}"
-		opkg update >/dev/null 2>&1 || { echo -e "\n${RED}Ошибка при обновлении списка пакетов!${NC}\n"; read -p "Нажмите Enter..." dummy; }
-		opkg install curl >/dev/null 2>&1 || { echo -e "\n${RED}Не удалось установить curl!${NC}\n"; read -p "Нажмите Enter..." dummy; }
-    }
-}
+PODKOP_LATEST_VER="0.7.10"
+
+BYEDPI_VER="0.17.3-r1"
+BYEDPI_ARCH="$LOCAL_ARCH"
+BYEDPI_FILE="byedpi_${BYEDPI_VER}_${BYEDPI_ARCH}.ipk"
+BYEDPI_URL="https://github.com/DPITrickster/ByeDPI-OpenWrt/releases/download/v0.17.3-24.10/${BYEDPI_FILE}"
+
+
 # ==========================================
 # AWG
 # ==========================================
 install_AWG() {
 echo -e "\n${MAGENTA}Устанавливаем AWG + интерфейс${NC}"
 echo -e "${GREEN}Обновляем список пакетов${NC}"
-opkg update >/dev/null 2>&1 || { echo -e "\n${RED}Ошибка при обновлении списка пакетов!${NC}\n"; exit 1; }
-echo -e "${GREEN}Определяем архитектуру и версию OpenWrt${NC}"
+opkg update >/dev/null 2>&1 || { echo -e "\n${RED}Ошибка при обновлении списка пакетов!${NC}\n"; read -p "Нажмите Enter..." dummy; return; }
 PKGARCH=$(opkg print-architecture | awk 'BEGIN {max=0} {if ($3 > max) {max = $3; arch = $2}} END {print arch}')
 TARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' -f1)
 SUBTARGET=$(ubus call system board | jsonfilter -e '@.release.target' | cut -d '/' -f2)
@@ -48,26 +44,23 @@ install_pkg() {
 local pkgname=$1
 local filename="${pkgname}${PKGPOSTFIX}"
 local url="${BASE_URL}v${VERSION}/${filename}"
-echo -e "${CYAN}Скачиваем ${NC}$pkgname"
-if wget -O "$AWG_DIR/$filename" "$url" >/dev/null 2>&1 ; then
-echo -e "${CYAN}Устанавливаем ${NC}$pkgname"
-if opkg install "$AWG_DIR/$filename" >/dev/null 2>&1 ; then
-echo -e "$pkgname ${GREEN}установлен успешно${NC}"
-else
-echo -e "\n${RED}Ошибка установки $pkgname!${NC}\n"
-exit 1
-fi
-else
-echo -e "\n${RED}Ошибка! Не удалось скачать $file${NC}\n"
-exit 1
-fi
+    if wget -O "$AWG_DIR/$filename" "$url" >/dev/null 2>&1 ; then
+        echo -e "${CYAN}Устанавливаем ${NC}$pkgname"
+        if ! opkg install "$AWG_DIR/$filename" >/dev/null 2>&1 ; then
+            echo -e "\n${RED}Ошибка установки $pkgname!${NC}\n"
+            read -p "Нажмите Enter..." dummy; return
+        fi
+    else
+        echo -e "\n${RED}Ошибка! Не удалось скачать $filename${NC}\n"
+        read -p "Нажмите Enter..." dummy; return
+    fi
 }
 install_pkg "kmod-amneziawg"
 install_pkg "amneziawg-tools"
 install_pkg "luci-proto-amneziawg"
-echo -e "${GREEN}Русская локализацию установлена${NC}"
 install_pkg "luci-i18n-amneziawg-ru" >/dev/null 2>&1 || echo -e "${RED}Внимание: русская локализация не установлена (не критично)${NC}"
 rm -rf "$AWG_DIR"
+echo -e "${YELLOW}Перезапускаем сеть! Подождите...${NC}"
 /etc/init.d/network restart >/dev/null 2>&1
 echo -e "AmneziaWG ${GREEN}установлен!${NC}"
 
@@ -90,7 +83,8 @@ echo -e "${CYAN}Перезапускаем сеть${NC}"
 /etc/init.d/network restart
 /etc/init.d/firewall restart
 /etc/init.d/uhttpd restart
-echo -e "${GREEN}Интерфейс ${NC}$IF_NAME${GREEN} создан и активирован!${NC}\n"
+echo -e "${GREEN}Интерфейс ${NC}$IF_NAME${GREEN} создан и активирован!${NC}"
+echo -e "${YELLOW}Вставьте рабочий конфиг в Interfaces (Интерфейс) AWG!${NC}\n"
 read -p "Нажмите Enter..." dummy
 }
 
@@ -129,9 +123,8 @@ config section 'main'
 	option user_domain_list_type 'disabled'
 	option user_subnet_list_type 'disabled'
 	option mixed_proxy_enabled '0'
-	list community_lists 'hodca'
 	list community_lists 'russia_inside'
-	list community_lists 'meta'
+	list community_lists 'hodca'
 EOF
 
 echo -e "AWG ${GREEN}интегрирован в ${NC}Podkop${GREEN}.${NC}"
@@ -152,31 +145,17 @@ read -p "Нажмите Enter..." dummy
 # Определение версий
 # ==========================================
 get_versions() {
-    # --- ByeDPI ---
+
+ # --- ByeDPI установленная версия ---
     BYEDPI_VER=$(opkg list-installed | grep '^byedpi ' | awk '{print $3}' | sed 's/-r[0-9]\+$//')
     [ -z "$BYEDPI_VER" ] && BYEDPI_VER="не найдена"
 
+    # --- Архитектура ---
     LOCAL_ARCH=$(awk -F\' '/DISTRIB_ARCH/ {print $2}' /etc/openwrt_release)
-    [ -z "$LOCAL_ARCH" ] && LOCAL_ARCH=$(opkg print-architecture | grep -v "noarch" | tail -n1 | awk '{print $2}')
+    [ -z "$LOCAL_ARCH" ] && LOCAL_ARCH=$(opkg print-architecture | grep -v noarch | tail -n1 | awk '{print $2}')
 
-	curl_install
-
-    # --- Получаем последнюю версию ByeDPI ---
-    BYEDPI_API_URL="https://api.github.com/repos/DPITrickster/ByeDPI-OpenWrt/releases"
-    RELEASE_DATA=$(curl -s "$BYEDPI_API_URL")
-    BYEDPI_URL=$(echo "$RELEASE_DATA" | grep browser_download_url | grep "$LOCAL_ARCH.ipk" | head -n1 | cut -d'"' -f4)
-    if [ -n "$BYEDPI_URL" ]; then
-        BYEDPI_FILE=$(basename "$BYEDPI_URL")
-        BYEDPI_LATEST_VER=$(echo "$BYEDPI_FILE" | sed -E 's/^byedpi_([0-9]+\.[0-9]+\.[0-9]+)(-r[0-9]+)?_.*/\1/')
-        LATEST_VER="$BYEDPI_LATEST_VER"
-        LATEST_URL="$BYEDPI_URL"
-        LATEST_FILE="$BYEDPI_FILE"
-    else
-        BYEDPI_LATEST_VER="не найдена"
-        LATEST_VER=""
-        LATEST_URL=""
-        LATEST_FILE=""
-    fi
+    # --- Последняя версия (фиксированная) ---
+    BYEDPI_LATEST_VER="0.17.3"
 
     # --- Podkop ---
     if command -v podkop >/dev/null 2>&1; then
@@ -185,9 +164,7 @@ get_versions() {
     else
         PODKOP_VER="не установлен"
     fi
-
-    PODKOP_API_URL="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
-    PODKOP_LATEST_VER=$(curl -s "$PODKOP_API_URL" | grep '"tag_name"' | head -n1 | cut -d'"' -f4 | sed 's/-r[0-9]\+$//')
+	
     [ -z "$PODKOP_LATEST_VER" ] && PODKOP_LATEST_VER="не найдена"
 
     # --- Нормализация версий ---
@@ -195,12 +172,15 @@ get_versions() {
     PODKOP_LATEST_VER=$(echo "$PODKOP_LATEST_VER" | sed 's/^v//')
     BYEDPI_VER=$(echo "$BYEDPI_VER" | sed 's/^v//')
     BYEDPI_LATEST_VER=$(echo "$BYEDPI_LATEST_VER" | sed 's/^v//')
-}
 
-# ==========================================
-# Проверка версии Podkop с подсветкой
-# ==========================================
-check_podkop_status() {
+    if [ "$BYEDPI_VER" = "не найдена" ] || [ "$BYEDPI_VER" = "не установлен" ]; then
+        BYEDPI_STATUS="${RED}$BYEDPI_VER${NC}"
+    elif [ "$BYEDPI_VER" != "$BYEDPI_LATEST_VER" ]; then
+        BYEDPI_STATUS="${RED}$BYEDPI_VER${NC}"
+    else
+        BYEDPI_STATUS="${GREEN}$BYEDPI_VER${NC}"
+    fi
+
     if [ "$PODKOP_VER" = "не найдена" ] || [ "$PODKOP_VER" = "не установлен" ]; then
         PODKOP_STATUS="${RED}$PODKOP_VER${NC}"
     elif [ "$PODKOP_LATEST_VER" != "не найдена" ] && [ "$PODKOP_VER" != "$PODKOP_LATEST_VER" ]; then
@@ -208,49 +188,37 @@ check_podkop_status() {
     else
         PODKOP_STATUS="${GREEN}$PODKOP_VER${NC}"
     fi
+	
 }
-
 # ==========================================
-# Проверка версии ByeDPI с подсветкой
-# ==========================================
-check_byedpi_status() {
-    if [ "$BYEDPI_VER" = "не найдена" ] || [ "$BYEDPI_VER" = "не установлен" ]; then
-        BYEDPI_STATUS="${RED}$BYEDPI_VER${NC}"
-    elif [ "$BYEDPI_LATEST_VER" != "не найдена" ] && [ "$BYEDPI_VER" != "$BYEDPI_LATEST_VER" ]; then
-        BYEDPI_STATUS="${RED}$BYEDPI_VER${NC}"
-    else
-        BYEDPI_STATUS="${GREEN}$BYEDPI_VER${NC}"
-    fi
-}
-
-# ==========================================
-# Установка / обновление ByeDPI
+# Установка  ByeDPI
 # ==========================================
 install_ByeDPI() {
-    echo -e "\n${MAGENTA}Установка / обновление ByeDPI${NC}"
-    get_versions
+    echo -e "\n${MAGENTA}Установка ByeDPI${NC}"
 
-    [ -z "$LATEST_URL" ] && {
-		echo -e "\n${RED}Последняя версия ByeDPI не найдена. Установка пропущена.${NC}\n"
-		read -p "Нажмите Enter..." dummy
-        return
-    }
+    BYEDPI_VER="0.17.3-r1"
+    BYEDPI_ARCH="$LOCAL_ARCH"
+    BYEDPI_FILE="byedpi_${BYEDPI_VER}_${BYEDPI_ARCH}.ipk"
+    BYEDPI_URL="https://github.com/DPITrickster/ByeDPI-OpenWrt/releases/download/v0.17.3-24.10/${BYEDPI_FILE}"
 
-	echo -e "${GREEN}Скачиваем ${NC}${WHITE}$LATEST_FILE${NC}"
+    echo -e "${GREEN}Скачиваем ${NC}${WHITE}$BYEDPI_FILE${NC}"
     mkdir -p "$WORKDIR"
     cd "$WORKDIR" || return
-    curl -L -s -o "$LATEST_FILE" "$LATEST_URL" || {
-        echo -e "${RED}Ошибка загрузки ${NC}$LATEST_FILE"
+
+    wget -q -U "Mozilla/5.0" -O "$BYEDPI_FILE" "$BYEDPI_URL" || {
+        echo -e "${RED}Ошибка загрузки ${NC}$BYEDPI_FILE"
         read -p "Нажмите Enter..." dummy
         return
     }
 
-	echo -e "${GREEN}Устанавливаем${NC} ${WHITE}$LATEST_FILE${NC}"
-    opkg install --force-reinstall "$LATEST_FILE" >/dev/null 2>&1
+    echo -e "${GREEN}Устанавливаем${NC} ${WHITE}$BYEDPI_FILE${NC}"
+    opkg install --force-reinstall "$BYEDPI_FILE" >/dev/null 2>&1
+
     rm -rf "$WORKDIR"
-	/etc/init.d/byedpi enable >/dev/null 2>&1
+    /etc/init.d/byedpi enable >/dev/null 2>&1
     /etc/init.d/byedpi start >/dev/null 2>&1
-    echo -e "ByeDPI ${GREEN}успешно установлен / обновлён!${NC}\n"
+
+    echo -e "ByeDPI ${GREEN}успешно установлен!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -270,10 +238,10 @@ uninstall_byedpi() {
 }
 
 # ==========================================
-# Установка / обновление Podkop
+# Установка
 # ==========================================
 install_podkop() {
-    echo -e "\n${MAGENTA}Установка / обновление Podkop${NC}"
+    echo -e "\n${MAGENTA}Установка Podkop${NC}"
 
     REPO="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
     DOWNLOAD_DIR="/tmp/podkop"
@@ -377,17 +345,6 @@ pkg_list_update || {
     return
 }
 
-    # Проверка GitHub API
-    if command -v curl >/dev/null 2>&1; then
-        check_response=$(curl -s "$REPO")
-        if echo "$check_response" | grep -q 'API rate limit '; then
-			echo ""
-            echo -e "${RED}Превышен лимит запросов GitHub. Повторите позже.${NC}"
-			echo ""
-            read -p "Нажмите Enter..." dummy
-            return
-        fi
-    fi
 
     # Шаблон скачивания
     if [ "$PKG_IS_APK" -eq 1 ]; then
@@ -438,7 +395,7 @@ pkg_list_update || {
     # Очистка
     rm -rf "$DOWNLOAD_DIR"
 
-    echo -e "Podkop ${GREEN}успешно установлен / обновлён!${NC}\n"
+    echo -e "Podkop ${GREEN}успешно установлен!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
 
@@ -580,38 +537,49 @@ uninstall_podkop() {
     read -p "Нажмите Enter..." dummy
 }
 
+
+
+# ==========================================
+# uninstall_AWG
+# ==========================================
+uninstall_AWG() {
+echo -e "\n${MAGENTA}Удаление AWG + интерфейс${NC}"
+opkg remove --force-removal-of-dependent-packages luci-i18n-amneziawg-ru luci-proto-amneziawg amneziawg-tools kmod-amneziawg >/dev/null 2>&1
+echo -e "AWG ${GREEN}удалён.${NC}"
+echo -e "${MAGENTA}Удаляем интерфейс AWG${NC}"
+uci -q delete network.AWG
+uci commit network
+/etc/init.d/network reload >/dev/null 2>&1
+echo -e "AWG ${GREEN}удалён.${NC}\n"
+read -p "Нажмите Enter..." dummy
+}
+
 # ==========================================
 # Меню
 # ==========================================
 show_menu() {
-    get_versions
+get_versions
 
-# ==========================================	
-# Получаем текущую стратегию ByeDPI
-# ==========================================
 if [ -f /etc/config/byedpi ]; then
     CURRENT_STRATEGY=$(grep "option cmd_opts" /etc/config/byedpi | sed -E "s/.*'(.+)'/\1/")
     [ -z "$CURRENT_STRATEGY" ] && CURRENT_STRATEGY="(не задана)"
 else
     CURRENT_STRATEGY="не найдена"
 fi
+
+
 	clear
 	echo -e "╔═══════════════════════════════╗"
 	echo -e "║         ${BLUE}Podkop Manager${NC}        ║"
 	echo -e "╚═══════════════════════════════╝"
-	echo -e "                ${DGRAY}by StressOzz v2.4${NC}"
+	echo -e "                ${DGRAY}by StressOzz v2.5${NC}"
 
-	check_podkop_status
-	check_byedpi_status
 
-	echo -e "${MAGENTA}--- ByeDPI ---${NC}"
-	echo -e "${YELLOW}Установленная версия:${NC} $BYEDPI_STATUS"
-	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$BYEDPI_LATEST_VER${NC}"
-	echo -e "${YELLOW}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
 	echo -e "${MAGENTA}--- Podkop ---${NC}"
 	echo -e "${YELLOW}Установленная версия:${NC} $PODKOP_STATUS"
-	echo -e "${YELLOW}Последняя версия:${NC} ${CYAN}$PODKOP_LATEST_VER${NC}"
-
+	echo -e "${MAGENTA}--- ByeDPI ---${NC}"
+	echo -e "${YELLOW}Установленная версия:${NC} $BYEDPI_STATUS"
+	echo -e "${YELLOW}Текущая стратегия:${NC} ${WHITE}$CURRENT_STRATEGY${NC}"
 	echo -e "${MAGENTA}--- AWG ---${NC}"
 if command -v amneziawg >/dev/null 2>&1 || opkg list-installed | grep -q "^amneziawg-tools"; then
     echo -e "${YELLOW}AWG: ${GREEN}установлен${NC}"
@@ -625,32 +593,32 @@ else
     echo -e "${YELLOW}Интерфейс AWG: ${RED}не установлен${NC}"
 fi
 
-	echo -e "\n${CYAN}1) ${GREEN}Установить / обновить ${NC}ByeDPI"
-    echo -e "${CYAN}2) ${GREEN}Удалить ${NC}ByeDPI"
- 	echo -e "${CYAN}3) ${GREEN}Установить / обновить ${NC}Podkop"
-	echo -e "${CYAN}4) ${GREEN}Удалить ${NC}Podkop"
+
+ 	echo -e "\n${CYAN}1) ${GREEN}Установить ${NC}Podkop"
+	echo -e "${CYAN}2) ${GREEN}Удалить ${NC}Podkop"
+	echo -e "${CYAN}3) ${GREEN}Установить ${NC}ByeDPI"
+    echo -e "${CYAN}4) ${GREEN}Удалить ${NC}ByeDPI"
     echo -e "${CYAN}5) ${GREEN}Интегрировать ${NC}ByeDPI ${GREEN}в ${NC}Podkop"
     echo -e "${CYAN}6) ${GREEN}Изменить текущую стратегию ${NC}ByeDPI"
 	echo -e "${CYAN}7) ${GREEN}Установить ${NC}AWG ${GREEN}+${NC} интерфейс"
-	echo -e "${CYAN}8) ${GREEN}Интегрировать ${NC}AWG ${GREEN}в ${NC}Podkop"
+	echo -e "${CYAN}8) ${GREEN}Удалить ${NC}AWG ${GREEN}+${NC} интерфейс"
+	echo -e "${CYAN}9) ${GREEN}Интегрировать ${NC}AWG ${GREEN}в ${NC}Podkop"
 	echo -e "${CYAN}0) ${GREEN}Перезагрузить устройство${NC}"
 	echo -e "${CYAN}Enter) ${GREEN}Выход${NC}"
     echo -ne "\n${YELLOW}Выберите пункт:${NC} "
     read choice
 
     case "$choice" in
-        1) install_ByeDPI ;;
-        2) uninstall_byedpi ;;
-        3) install_podkop ;;
-		4) uninstall_podkop ;;
+        1) install_podkop ;;
+		2) uninstall_podkop ;;
+        3) install_ByeDPI ;;
+        4) uninstall_byedpi ;;
 		5) integration_byedpi_podkop ;;
         6) fix_strategy ;;
 		7) install_AWG ;;
-		8) integration_AWG ;;
-		0) echo -e "\n${RED}Перезагрузка${NC}\n"
-        sleep 1
-        reboot
-		;;
+		8) uninstall_AWG ;;
+		9) integration_AWG ;;
+		0) echo -e "\n${RED}Перезагрузка${NC}\n"; reboot ;;
         *) exit 0 ;;
     esac
 }
