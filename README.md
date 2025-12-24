@@ -44,7 +44,7 @@
 ## 🧩 Запуск менеджера
 Скрипт который запускает менеджер
 ```
-sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-ByeDPI-OpenWRT/main/Podkop-Manager.sh)
+sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/Podkop-Manager.sh)
 ```
 
 ### Возможна так же [Ручная установка](readme.hand.md)
