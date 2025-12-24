@@ -227,13 +227,11 @@ install_ByeDPI() {
 # ==========================================
 uninstall_byedpi() {
     echo -e "\n${MAGENTA}Удаление ByeDPI${NC}"
-    [ -f /etc/init.d/byedpi ] && {
-        /etc/init.d/byedpi stop >/dev/null 2>&1
-        /etc/init.d/byedpi disable >/dev/null 2>&1
-    }
-    opkg remove --force-removal-of-dependent-packages byedpi >/dev/null 2>&1
-	uci set dhcp.@dnsmasq[0].localuse='1'; uci commit dhcp; /etc/init.d/dnsmasq restart
-    rm -rf /etc/init.d/byedpi /opt/byedpi /etc/config/byedpi
+/etc/init.d/byedpi stop >/dev/null 2>&1
+/etc/init.d/byedpi disable >/dev/null 2>&1
+opkg remove --force-removal-of-dependent-packages byedpi >/dev/null 2>&1
+uci delete dhcp.@dnsmasq[0].localuse >/dev/null 2>&1; uci commit dhcp >/dev/null 2>&1; /etc/init.d/dnsmasq restart >/dev/null 2>&1
+rm -rf /etc/init.d/byedpi /opt/byedpi /etc/config/byedpi
     echo -e "${GREEN}ByeDPI удалён!${NC}\n"
     read -p "Нажмите Enter..." dummy
 }
