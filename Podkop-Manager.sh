@@ -232,6 +232,7 @@ uninstall_byedpi() {
         /etc/init.d/byedpi disable >/dev/null 2>&1
     }
     opkg remove --force-removal-of-dependent-packages byedpi >/dev/null 2>&1
+	uci set dhcp.@dnsmasq[0].localuse='1'; uci commit dhcp; /etc/init.d/dnsmasq restart
     rm -rf /etc/init.d/byedpi /opt/byedpi /etc/config/byedpi
     echo -e "${GREEN}ByeDPI удалён!${NC}\n"
     read -p "Нажмите Enter..." dummy
