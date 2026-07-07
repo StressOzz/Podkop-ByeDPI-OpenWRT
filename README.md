@@ -1,3 +1,10 @@
+> [!IMPORTANT] 
+> Можете воспользоваться [Zapret Manager](https://github.com/StressOzz/Zapret-Manager)
+>
+> В нём реализована установка **NetShift** (Podkop Evolution) и **Mixomo** - с возможностью интеграции [**VPN подписки**](https://github.com/StressOzz/StressKVN), а также генерации и интеграции **WARP**...
+
+
+
 <h1 align="center">Podkop Manager</h1>
 
 <div align="center">
