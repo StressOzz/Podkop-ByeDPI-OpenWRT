@@ -17,11 +17,6 @@
 
 </div>
 
-<p align="center">
-  <b>Многофункциональный установщик, менеджер и интегратор для OpenWRT.</b><br>
-    <b>Обеспечивает обход DPI на уровне роутера, интеграцию прокси с фильтрацией трафика,</b><br>
-     <b> стабильную маршрутизацию YouTube, Cloudflare, Госуслуг и др.</b><br>
-
 ---
 
 ### **StressKVN** - умный VPN для стабильного доступа в любых условиях
@@ -29,7 +24,8 @@
 - ✅ Работает даже при жёсткой фильтрации и в условиях белых списков
 - 🌍 Умная маршрутизация: иностранные ресурсы через VPN, российский трафик напрямую
 - ⚡ Высокая скорость и безлимитный трафик
-- 📶 Можно использовать прямо на роутере
+- 📶 Можно использовать на роутере
+- ▶️ YouTube без рекламы
 - 🎁 Бесплатный тест — 3 дня без оплаты
 
 Подробнее: **https://github.com/StressOzz/StressKVN**
@@ -106,7 +102,7 @@ Reboot
     </td>
     <td>
       <a href="https://github.com/StressOzz/StressKVN">
-        <img width="270" height="80" src="https://github.com/user-attachments/assets/7dbb964b-bb79-461a-9f47-9ca73323ebac">
+        <img width="280" height="130" alt="image" src="https://github.com/user-attachments/assets/519a126e-bd39-4f46-8a09-3f0d6e1dd8af">
       </a>
     </td>
   </tr>
@@ -114,9 +110,6 @@ Reboot
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=StressOzz/Podkop-ByeDPI-OpenWRT&type=date&legend=top-left)](https://www.star-history.com/#StressOzz/Podkop-ByeDPI-OpenWRT&type=date&legend=top-left)
-
----
 ## Большое спасибо
 
 - **[itdoginfo](https://github.com/itdoginfo)** за [podkop](https://github.com/itdoginfo/podkop)
