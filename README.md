@@ -1,7 +1,7 @@
 > [!IMPORTANT] 
 > Можете воспользоваться [Zapret Manager](https://github.com/StressOzz/Zapret-Manager)
 >
-> В нём реализована установка **NetShift** (Podkop Evolution) и **Mixomo** - с возможностью интеграции [**VPN подписки**](https://github.com/StressOzz/StressKVN), а также генерации и интеграции **WARP**...
+> В нём реализована установка [**NetShift**](https://github.com/yandexru45/netshift) и [**Mixomo**](https://github.com/Internet-Helper/mixomo-openwrt) - с возможностью интеграции [**VPN подписки**](https://github.com/StressOzz/StressKVN), а также генерации и интеграции **WARP** и интеграции **ByeDPI**...
 
 <h1 align="center">Podkop Manager</h1>
 
