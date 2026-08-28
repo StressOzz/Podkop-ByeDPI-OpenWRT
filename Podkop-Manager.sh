@@ -12,9 +12,59 @@ NC="\033[0m"
 BLUE="\033[0;34m"
 DGRAY="\033[38;5;244m"
 
+if command -v opkg >/dev/null 2>&1; then PKG="opkg"; GO_SUF="1"; CONFZ="/etc/opkg/distfeeds.conf"; PKG_IS_APK=0; UPDATE="opkg update"; INSTALL="opkg install"
+DELETE="opkg remove"; ARCH="$(opkg print-architecture | awk '{print $2}' | tail -n1)"; VER_SUF="r1-all"; SUF_MT=""; SPL_SUF="all"; RELEASE_TAG="v${BYEDPI_LATEST_VER}-24.10"
+RAZ="ipk"; TMP_FILE_GO="/tmp/tg-ws-proxy.ipk"; else PKG="apk"; GO_SUF="r1"; CONFZ="/etc/apk/repositories.d/distfeeds.list"; PKG_IS_APK=1; SPL_SUF="noarch"; RELEASE_TAG="v${BYEDPI_LATEST_VER}-25.12"
+UPDATE="apk update"; INSTALL="apk add --allow-untrusted"; DELETE="apk del"; ARCH="$(apk --print-arch 2>/dev/null)"; RAZ="apk"; VER_SUF="r1"; SUF_MT="r"; TMP_FILE_GO="/tmp/tg-ws-proxy.apk"; fi
+
+
 tmpDIR="/tmp/PodkopManager"
 rm -rf "$tmpDIR"
 mkdir -p "$tmpDIR"
+
+
+GH_RAW_HOST="https://raw.githubusercontent.com"; GH_MAIN_HOST="https://github.com"; GH_PROXY="https://gh-proxy.org/"; GH_CHECK_URL="${GH_RAW_HOST}/StressOzz/Zapret-Manager/refs/heads/main/Zapret-Manager.sh"
+echo -e "${CYAN}Проверяем доступность ${NC}raw.githubusercontent.com"; if wget -q -T 4 -O /dev/null "$GH_CHECK_URL" 2>/dev/null; then GH_OK=1; GH_RAW="$GH_RAW_HOST"
+GH_MAIN="$GH_MAIN_HOST"; echo -e "raw.githubusercontent.com ${GREEN}доступен!${NC}\n"; else GH_OK=0; GH_RAW="${GH_PROXY}${GH_RAW_HOST}"; GH_MAIN="${GH_PROXY}${GH_MAIN_HOST}"
+echo -e "raw.githubusercontent.com ${RED}недоступен${CYAN} — ${YELLOW}используем прокси!${NC}\n"; fi
+
+
+MIRROR=""
+CURRENT_MIRROR=$(head -n1 "$CONFZ" | awk '{print $NF}' | sed 's|https://||;s|/releases/.*||')
+
+if grep -qE 'mirror-03\.infra\.openwrt\.org|ftp\.snt\.utwente\.nl/pub/software/openwrt|mirror\.berlin\.freifunk\.net/downloads\.openwrt|mirror\.sjtu\.edu\.cn/openwrt|downloads\.openwrt\.org' "$CONFZ"; then
+
+    echo -e "${CYAN}Проверяем доступность ${NC}$CURRENT_MIRROR"
+
+    if ! wget -q --spider --timeout=2 "https://$CURRENT_MIRROR/releases/" >/dev/null 2>&1; then
+        echo -e "$CURRENT_MIRROR ${RED}недоступен!${NC}"
+
+        if wget -q --spider --timeout=3 "https://mirror-03.infra.openwrt.org/releases/" >/dev/null 2>&1; then
+            MIRROR="mirror-03.infra.openwrt.org"
+        elif wget -q --spider --timeout=3 "https://ftp.snt.utwente.nl/pub/software/openwrt/releases/" >/dev/null 2>&1; then
+            MIRROR="ftp.snt.utwente.nl/pub/software/openwrt"
+        elif wget -q --spider --timeout=3 "https://mirror.berlin.freifunk.net/downloads.openwrt/releases/" >/dev/null 2>&1; then
+            MIRROR="mirror.berlin.freifunk.net/downloads.openwrt"
+        elif wget -q --spider --timeout=3 "https://mirror.sjtu.edu.cn/openwrt/releases/" >/dev/null 2>&1; then
+            MIRROR="mirror.sjtu.edu.cn/openwrt"
+        elif wget -q --spider --timeout=3 "https://downloads.openwrt.org/releases/" >/dev/null 2>&1; then
+            MIRROR="downloads.openwrt.org"
+        fi
+
+        if [ -n "$MIRROR" ]; then
+            echo -e "${CYAN}Переключаемся на ${NC}$MIRROR"
+            sed -i "s|https://.*/releases/|https://$MIRROR/releases/|g" "$CONFZ"
+        else
+            echo -e "${RED}Резервные зеркала недоступны!${NC}"
+        fi
+    else
+        echo -e "$CURRENT_MIRROR ${GREEN}доступен!${NC}"
+    fi
+fi
+
+if ! curl --version >/dev/null 2>&1; then echo -e "\ncurl ${RED}отсутствует ${NC}или${RED} работает некорректно${NC}\n"; echo -e "${MAGENTA}Устанавливаем ${NC}curl"
+$DELETE curl libcurl >/dev/null 2>&1; echo -e "${CYAN}Обновляем список пакетов${NC}"; if ! $UPDATE >/dev/null 2>&1; then echo -e "\n${RED}Ошибка обновления списка пакетов!${NC}\n"; else PACKAGES_UPDATED=1; fi
+echo -e "${CYAN}Устанавливаем ${NC}curl"; if ! $INSTALL libcurl curl >/dev/null 2>&1; then echo -e "\n${RED}Не удалось установить curl!${NC}\n"; PAUSE; fi; fi
 
 PODKOP_LATEST_VER="$(curl -Ls -o /dev/null -w '%{url_effective}' https://github.com/itdoginfo/podkop/releases/latest | sed -E 's#.*/tag/v?##')"
 
@@ -22,7 +72,7 @@ BYEDPI_VER="0.17.3"
 
 BYEDPI_LATEST_VER="$BYEDPI_VER"
 
-BASE_URL="https://github.com/Slava-Shchipunov/awg-openwrt/releases/download/"
+BASE_URL="${GH_MAIN}/Slava-Shchipunov/awg-openwrt/releases/download/"
 
 IF_NAME="AWG"
 PROTO="amneziawg"
@@ -40,7 +90,7 @@ PAUSE() { echo -ne "\nНажмите Enter..."; read dummy; }
 
 pkg_remove() { local pkg_name="$1"; if [ "$PKG_IS_APK" -eq 1 ]; then apk del "$pkg_name" >/dev/null 2>&1 || true; else opkg remove --force-depends "$pkg_name" >/dev/null 2>&1 || true; fi; }
 
-echo 'sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/Podkop-Manager.sh)' > /usr/bin/pkm; chmod +x /usr/bin/pkm
+echo 'sh <(wget -O - ${GH_RAW}/StressOzz/Podkop-Manager/main/Podkop-Manager.sh)' > /usr/bin/pkm; chmod +x /usr/bin/pkm
 
 # ==========================================
 # AWG
@@ -252,7 +302,7 @@ INSTALL_CMD="opkg install --force-reinstall"
 fi
 
 BYEDPI_FILE="byedpi_${BYEDPI_VER}-r1_${LOCAL_ARCH}.${PKG_EXT}"
-BYEDPI_URL="https://github.com/DPITrickster/ByeDPI-OpenWrt/releases/download/${RELEASE_TAG}/${BYEDPI_FILE}"
+BYEDPI_URL="${GH_MAIN}/DPITrickster/ByeDPI-OpenWrt/releases/download/${RELEASE_TAG}/${BYEDPI_FILE}"
 
 echo -e "${CYAN}Скачиваем ${NC}$BYEDPI_FILE${NC}"
 
@@ -299,10 +349,15 @@ PAUSE
 # ==========================================
 # Установка
 # ==========================================
+
 install_podkop() {
 echo -e "\n${MAGENTA}Установка Podkop${NC}"
 
-REPO="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
+if [ "$GH_OK" -eq 1 ]; then
+    REPO="https://api.github.com/repos/itdoginfo/podkop/releases/latest"
+else
+    REPO="${GH_PROXY}https://api.github.com/repos/itdoginfo/podkop/releases/latest"
+fi
 
 PKG_IS_APK=0
 command -v apk >/dev/null 2>&1 && PKG_IS_APK=1
@@ -398,8 +453,9 @@ urls=$(wget -qO- "$REPO" 2>/dev/null | grep -o "$grep_url_pattern")
 for url in $urls; do
 filename=$(basename "$url")
 filepath="$tmpDIR/$filename"
+dl_url=$(echo "$url" | sed "s|https://github.com|${GH_MAIN}|")
 echo -e "${CYAN}Скачиваем ${NC}$filename"
-if wget -q -O "$filepath" "$url" >/dev/null 2>&1 && [ -s "$filepath" ]; then
+if wget -q -O "$filepath" "$dl_url" >/dev/null 2>&1 && [ -s "$filepath" ]; then
 download_success=1
 else
 echo -e "\n${RED}Ошибка скачивания ${NC}$filename"
@@ -432,7 +488,6 @@ fi
 echo -e "Podkop ${GREEN}установлен!${NC}"
 PAUSE
 }
-
 # ==========================================
 # Интеграция ByeDPI в Podkop
 # ==========================================
@@ -599,7 +654,7 @@ clear
 echo -e "╔═══════════════════════════════╗"
 echo -e "║         ${BLUE}Podkop Manager${NC}        ║"
 echo -e "╚═══════════════════════════════╝"
-echo -e "                ${DGRAY}by StressOzz v2.8${NC}"
+echo -e "                ${DGRAY}by StressOzz v2.9${NC}"
 
 echo -e "${MAGENTA}--- Podkop ---${NC}"
 echo -e "${YELLOW}Установленная версия:${NC} $PODKOP_STATUS"
