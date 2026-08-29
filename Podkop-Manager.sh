@@ -66,7 +66,7 @@ if ! curl --version >/dev/null 2>&1; then echo -e "\ncurl ${RED}отсутств
 $DELETE curl libcurl >/dev/null 2>&1; echo -e "${CYAN}Обновляем список пакетов${NC}"; if ! $UPDATE >/dev/null 2>&1; then echo -e "\n${RED}Ошибка обновления списка пакетов!${NC}\n"; else PACKAGES_UPDATED=1; fi
 echo -e "${CYAN}Устанавливаем ${NC}curl"; if ! $INSTALL libcurl curl >/dev/null 2>&1; then echo -e "\n${RED}Не удалось установить curl!${NC}\n"; PAUSE; fi; fi
 
-PODKOP_LATEST_VER="$(curl -Ls -o /dev/null -w '%{url_effective}' ${GH_MAIN}/itdoginfo/podkop/releases/latest | sed -E 's#.*/tag/v?##')"
+PODKOP_LATEST_VER="$(curl -Ls -o /dev/null -w '%{url_effective}' https://github.com/itdoginfo/podkop/releases/latest | sed -E 's#.*/tag/v?##')"
 
 BYEDPI_VER="0.17.3"
 
