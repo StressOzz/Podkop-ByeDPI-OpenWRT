@@ -32,25 +32,25 @@
 
 ---
 
+## Запуск менеджера
+
+Подключитесь по **SSH** к роутеру и выполните команду:
 > [!IMPORTANT]
-> При возникновении проблем с запуском скрипта или его функций выполните в **SSH** следующую команду:
-> ```
-> git="githubusercontent.com"; grep -q "raw.$git" /etc/hosts || { printf "#$git\n185.199.109.133 raw.$git release-assets.$git\n185.199.108.133 private-user-images.$git\n" >> /etc/hosts; /etc/init.d/dnsmasq restart 2>/dev/null; }; echo -e "\033[0;32mOK\033[0m"
-> ```
+> Если у Вас доступен **githubusercontent.com**:
+```
+sh <(wget -qO - 'https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/Podkop-Manager.sh')
+```
+> [!IMPORTANT]
+> Если у Вас **НЕ** доступен **githubusercontent.com**:
+```
+sh <(wget -qO - 'https://gh-proxy.org/https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/Podkop-Manager.sh')
+```
 
 > [!NOTE]
 > Рекомендуется устанавливать на "чистый" роутер !
 
 > [!WARNING]
 > Все настройки Podkop будут сброшены !
-
----
-
-## Запуск менеджера
-Скрипт который запускает менеджер
-```
-sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/Podkop-Manager.sh)
-```
 
 ---
 
@@ -91,7 +91,9 @@ sh <(wget -O - https://raw.githubusercontent.com/StressOzz/Podkop-Manager/main/P
 Удаляеет AmneziaWG и интерфейс AWG
 ### 9) Интегрировать AWG в Podkop
 Настривает Podkop для работы с AWG (все настройки Podkop будут сброшены)
-### 0) Перезагрузить устройство
+### 0) Меню выбора зеркала OpenWrt
+Позволяет выбрать зеркало для пакетов OpenWRT
+### r) Перезагрузить устройство
 Reboot
 
 ## Советы по использованию
