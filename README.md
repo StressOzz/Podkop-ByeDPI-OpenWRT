@@ -17,6 +17,11 @@
 
 </div>
 
+<p align="center">
+  <a href="https://t.me/stressozz_manager">💬 Telegram Community</a>
+</p>
+
+
 ---
 
 ### **StressKVN** - умный VPN для стабильного доступа в любых условиях
