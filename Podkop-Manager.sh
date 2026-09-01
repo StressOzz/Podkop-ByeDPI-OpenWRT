@@ -23,44 +23,41 @@ rm -rf "$tmpDIR"
 mkdir -p "$tmpDIR"
 
 
-GH_RAW_HOST="https://raw.githubusercontent.com"; GH_MAIN_HOST="https://github.com"; GH_PROXY="https://gh-proxy.org/"; GH_CHECK_URL="${GH_RAW_HOST}/StressOzz/Zapret-Manager/refs/heads/main/Zapret-Manager.sh"
-echo -e "${CYAN}Проверяем доступность ${NC}raw.githubusercontent.com"; if wget -q -T 4 -O /dev/null "$GH_CHECK_URL" 2>/dev/null; then GH_OK=1; GH_RAW="$GH_RAW_HOST"
-GH_MAIN="$GH_MAIN_HOST"; echo -e "raw.githubusercontent.com ${GREEN}доступен!${NC}\n"; else GH_OK=0; GH_RAW="${GH_PROXY}${GH_RAW_HOST}"; GH_MAIN="${GH_PROXY}${GH_MAIN_HOST}"
-echo -e "raw.githubusercontent.com ${RED}недоступен${CYAN} — ${YELLOW}используем прокси!${NC}\n"; fi
+GH_RAW_HOST="https://raw.githubusercontent.com"; GH_MAIN_HOST="https://github.com"; 
+# GH_PROXY="https://gh-proxy.org/"; GH_CHECK_URL="${GH_RAW_HOST}/StressOzz/Zapret-Manager/refs/heads/main/Zapret-Manager.sh"
+# echo -e "${CYAN}Проверяем доступность ${NC}raw.githubusercontent.com"; if wget -q -T 4 -O /dev/null "$GH_CHECK_URL" 2>/dev/null; then GH_OK=1; 
+GH_RAW="$GH_RAW_HOST"; GH_MAIN="$GH_MAIN_HOST"
+# echo -e "raw.githubusercontent.com ${GREEN}доступен!${NC}\n"; else GH_OK=0; GH_RAW="${GH_PROXY}${GH_RAW_HOST}"; GH_MAIN="${GH_PROXY}${GH_MAIN_HOST}"
+# echo -e "raw.githubusercontent.com ${RED}недоступен${CYAN} — ${YELLOW}используем прокси!${NC}\n"; fi
 
 
-MIRROR=""
-CURRENT_MIRROR=$(head -n1 "$CONFZ" | awk '{print $NF}' | sed 's|https://||;s|/releases/.*||')
-
-if grep -qE 'mirror-03\.infra\.openwrt\.org|ftp\.snt\.utwente\.nl/pub/software/openwrt|mirror\.berlin\.freifunk\.net/downloads\.openwrt|mirror\.sjtu\.edu\.cn/openwrt|downloads\.openwrt\.org' "$CONFZ"; then
-
-    echo -e "${CYAN}Проверяем доступность ${NC}$CURRENT_MIRROR"
-
-    if ! wget -q --spider --timeout=2 "https://$CURRENT_MIRROR/releases/" >/dev/null 2>&1; then
-        echo -e "$CURRENT_MIRROR ${RED}недоступен!${NC}"
-
-        if wget -q --spider --timeout=3 "https://mirror-03.infra.openwrt.org/releases/" >/dev/null 2>&1; then
-            MIRROR="mirror-03.infra.openwrt.org"
-        elif wget -q --spider --timeout=3 "https://ftp.snt.utwente.nl/pub/software/openwrt/releases/" >/dev/null 2>&1; then
-            MIRROR="ftp.snt.utwente.nl/pub/software/openwrt"
-        elif wget -q --spider --timeout=3 "https://mirror.berlin.freifunk.net/downloads.openwrt/releases/" >/dev/null 2>&1; then
-            MIRROR="mirror.berlin.freifunk.net/downloads.openwrt"
-        elif wget -q --spider --timeout=3 "https://mirror.sjtu.edu.cn/openwrt/releases/" >/dev/null 2>&1; then
-            MIRROR="mirror.sjtu.edu.cn/openwrt"
-        elif wget -q --spider --timeout=3 "https://downloads.openwrt.org/releases/" >/dev/null 2>&1; then
-            MIRROR="downloads.openwrt.org"
-        fi
-
-        if [ -n "$MIRROR" ]; then
-            echo -e "${CYAN}Переключаемся на ${NC}$MIRROR"
-            sed -i "s|https://.*/releases/|https://$MIRROR/releases/|g" "$CONFZ"
-        else
-            echo -e "${RED}Резервные зеркала недоступны!${NC}"
-        fi
-    else
-        echo -e "$CURRENT_MIRROR ${GREEN}доступен!${NC}"
-    fi
-fi
+# MIRROR=""
+# CURRENT_MIRROR=$(head -n1 "$CONFZ" | awk '{print $NF}' | sed 's|https://||;s|/releases/.*||')
+# if grep -qE 'mirror-03\.infra\.openwrt\.org|ftp\.snt\.utwente\.nl/pub/software/openwrt|mirror\.berlin\.freifunk\.net/downloads\.openwrt|mirror\.sjtu\.edu\.cn/openwrt|downloads\.openwrt\.org' "$CONFZ"; then
+#     echo -e "${CYAN}Проверяем доступность ${NC}$CURRENT_MIRROR"
+#     if ! wget -q --spider --timeout=2 "https://$CURRENT_MIRROR/releases/" >/dev/null 2>&1; then
+#         echo -e "$CURRENT_MIRROR ${RED}недоступен!${NC}"
+#         if wget -q --spider --timeout=3 "https://mirror-03.infra.openwrt.org/releases/" >/dev/null 2>&1; then
+#             MIRROR="mirror-03.infra.openwrt.org"
+#         elif wget -q --spider --timeout=3 "https://ftp.snt.utwente.nl/pub/software/openwrt/releases/" >/dev/null 2>&1; then
+#             MIRROR="ftp.snt.utwente.nl/pub/software/openwrt"
+#         elif wget -q --spider --timeout=3 "https://mirror.berlin.freifunk.net/downloads.openwrt/releases/" >/dev/null 2>&1; then
+#             MIRROR="mirror.berlin.freifunk.net/downloads.openwrt"
+#         elif wget -q --spider --timeout=3 "https://mirror.sjtu.edu.cn/openwrt/releases/" >/dev/null 2>&1; then
+#             MIRROR="mirror.sjtu.edu.cn/openwrt"
+#         elif wget -q --spider --timeout=3 "https://downloads.openwrt.org/releases/" >/dev/null 2>&1; then
+#             MIRROR="downloads.openwrt.org"
+#         fi
+#         if [ -n "$MIRROR" ]; then
+#             echo -e "${CYAN}Переключаемся на ${NC}$MIRROR"
+#             sed -i "s|https://.*/releases/|https://$MIRROR/releases/|g" "$CONFZ"
+#         else
+#             echo -e "${RED}Резервные зеркала недоступны!${NC}"
+#         fi
+#     else
+#         echo -e "$CURRENT_MIRROR ${GREEN}доступен!${NC}"
+#     fi
+# fi
 
 if ! curl --version >/dev/null 2>&1; then echo -e "\ncurl ${RED}отсутствует ${NC}или${RED} работает некорректно${NC}\n"; echo -e "${MAGENTA}Устанавливаем ${NC}curl"
 $DELETE curl libcurl >/dev/null 2>&1; echo -e "${CYAN}Обновляем список пакетов${NC}"; if ! $UPDATE >/dev/null 2>&1; then echo -e "\n${RED}Ошибка обновления списка пакетов!${NC}\n"; else PACKAGES_UPDATED=1; fi
